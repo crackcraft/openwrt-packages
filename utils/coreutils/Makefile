@@ -8,14 +8,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=coreutils
-PKG_VERSION:=8.16
+PKG_VERSION:=8.32
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/coreutils
-PKG_MD5SUM:=89b06f91634208dceba7b36ad1f9e8b9
-PKG_BUILD_DEPENDS:=libpthread
-PKG_MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+PKG_HASH:=4458d8de7849df44ccab15e16b1548b285224dbba5f08fac070c1c0e0bcc4cfa
+
+PKG_MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+PKG_LICENSE:=GPL-3.0-or-later
+PKG_LICENSE_FILES:=COPYING
+PKG_CPE_ID:=cpe:/a:gnu:coreutils
 
 PKG_BUILD_PARALLEL:=1
 
@@ -32,10 +35,42 @@ COREUTILS_APPLETS := \
 	timeout touch tr true truncate tsort tty uname unexpand	uniq unlink	\
 	uptime users vdir wc who whoami yes
 
+DIR_BIN := \
+	base64 cat chgrp chmod chown cp date dd echo false kill link ln ls	\
+	mkdir mknod mktemp mv nice printenv pwd rm rmdir sleep stat stty sync	\
+	touch true uname
+
+DIR_USR_BIN := \
+	basename cksum comm cut dirname du env expand expr factor fold groups	\
+	head hostid id install logname md5sum mkfifo nl nohup nproc od paste	\
+	printf readlink realpath seq sha1sum sha256sum sha512sum shred shuf	\
+	sort split sum tac tail tee test timeout tr truncate tty unexpand uniq	\
+	unlink uptime users wc who whoami yes
+
+DIR_USR_SBIN := \
+	chroot
+
+# BusyBox does not provide these yet
+DIR_OTHERS := \
+	chcon csplit dir dircolors fmt join pathchk pinky pr ptx runcon		\
+	sha224sum sha384sum stdbuf tsort vdir
+
+$(eval $(foreach a,$(DIR_BIN),ALTS_$(a):=300:/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
+$(eval $(foreach a,$(DIR_USR_BIN),ALTS_$(a):=300:/usr/bin/$(a):/usr/bin/gnu-$(a)$(newline)))
+$(eval $(foreach a,$(DIR_USR_SBIN),ALTS_$(a):=300:/usr/sbin/$(a):/usr/bin/gnu-$(a)$(newline)))
+
 DEPENDS_sort = +libpthread
 DEPENDS_timeout = +librt
 DEPENDS_expr = +libgmp
 DEPENDS_factor = +libgmp
+DEPENDS_cp = +libacl
+DEPENDS_dir = +libacl +libcap
+DEPENDS_install = +libacl
+DEPENDS_ls = +libacl +libcap
+DEPENDS_mv = +libacl
+DEPENDS_vdir = +libacl +libcap
+
+FILES_stdbuf := usr/lib/coreutils/libstdbuf.so
 
 define Package/coreutils/Default
   SECTION:=utils
@@ -51,9 +86,9 @@ define Package/coreutils
 endef
 
 define Package/coreutils/description
- Full versions of standard GNU utilities. Normally, you would not use this
- package, since the functionality in BusyBox is more than sufficient and
- smaller.
+ Full versions of standard GNU utilities. If an equivalent Busybox applet is
+ available, you should consider compiling that instead as Busybox applets are
+ usually smaller, at the expense of reduced functionality.
 endef
 
 define GenPlugin
@@ -61,11 +96,11 @@ define GenPlugin
    $(call Package/coreutils/Default)
    DEPENDS:=coreutils $(DEPENDS_$(2))
    TITLE:=Utility $(2) from the GNU core utilities
+   ALTERNATIVES:=$(ALTS_$(2))
  endef
 
  define Package/$(1)/description
-  Full version of standard GNU $(2) utility. Normally, you would not use this
-  package, since the functionality in BusyBox is more than sufficient.
+  Full version of standard GNU $(2) utility.
  endef
 endef
 
@@ -83,13 +118,24 @@ endif
 
 CONFIGURE_ARGS += \
 	--disable-xattr \
-	--enable-install-program=su
+	--enable-install-program=su \
+	--enable-threads=posix \
+	--enable-acl \
+	--disable-assert \
+	--disable-rpath \
+	--disable-libsmack \
+	--enable-libcap \
+	--without-linux-crypto \
+	--without-openssl \
+	--$(if $(CONFIG_USE_MUSL),with,without)-included-regex \
+	--without-selinux \
+	--with-gmp
 
 define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR) \
 		DESTDIR="$(PKG_INSTALL_DIR)" \
 		SHELL="/bin/bash" \
-		all install install-root
+		all install
 endef
 
 define Package/coreutils/install
@@ -99,7 +145,11 @@ endef
 define BuildPlugin
   define Package/$(1)/install
 	$(INSTALL_DIR) $$(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/$(2) $$(1)/usr/bin/$(if $(ALTS_$(2)),gnu-$(2),$(2))
+	$(foreach f,$(FILES_$(2)),
+		$(INSTALL_DIR) $$(1)/$(dir $(f))
+		$(INSTALL_BIN) $(PKG_INSTALL_DIR)/$(f) $$(1)/$(f)
+	)
   endef
 
   $$(eval $$(call BuildPackage,$(1)))
