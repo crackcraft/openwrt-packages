@@ -40,6 +40,9 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_LIBNETTLE_MINI \
 	CONFIG_PACKAGE_libgnutls-dane \
 
+
+EXTRA_CFLAGS:=$(EXTRA_CFLAGS) -std=gnu99
+
 include $(INCLUDE_DIR)/package.mk
 
 
@@ -98,7 +101,7 @@ endef
 define Package/libgnutls
 $(call Package/gnutls/Default)
   TITLE+= (library)
-  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp +GNUTLS_EXT_LIBTASN1:libtasn1 +GNUTLS_PKCS11:p11-kit +GNUTLS_CRYPTODEV:kmod-cryptodev +libatomic
+  DEPENDS+= +libnettle +!LIBNETTLE_MINI:libgmp +GNUTLS_EXT_LIBTASN1:libtasn1 +GNUTLS_PKCS11:p11-kit +GNUTLS_CRYPTODEV:kmod-cryptodev +libatomic +libpthread
 endef
 
 define Package/libgnutls-dane
