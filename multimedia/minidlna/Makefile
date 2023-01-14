@@ -23,6 +23,8 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 PKG_BUILD_PARALLEL:=1
 
+EXTRA_CFLAGS:=$(EXTRA_CFLAGS) -std=gnu99
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/nls.mk
 
