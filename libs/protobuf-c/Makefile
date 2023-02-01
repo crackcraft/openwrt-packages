@@ -7,22 +7,27 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=libprotobuf-c
-PKG_VERSION:=2014-06-30
-PKG_RELEASE:=$(PKG_SOURCE_VERSION)
+PKG_NAME:=protobuf-c
+PKG_VERSION:=1.2.1
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/protobuf-c/protobuf-c.git
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=6136f54b221ab8883731349d01f34b01812e391d
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/protobuf-c/protobuf-c/releases/download/v$(PKG_VERSION)
+PKG_MD5SUM:=e544249c329391fff512c3874895cfbe
+
+
+PKG_BUILD_DEPENDS:=protobuf-c/host
+HOST_BUILD_DEPENDS:=protobuf/host
 
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
+PKG_LICENSE:=BSD-2c
+
 PKG_MAINTAINER:=Jacob Siverskog <jacob@teenageengineering.com>
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/host-build.mk
 
 define Package/libprotobuf-c
   TITLE:=Protocol Buffers library
@@ -58,3 +63,5 @@ define Package/libprotobuf-c/install
 endef
 
 $(eval $(call BuildPackage,libprotobuf-c))
+$(eval $(call HostBuild))
+
