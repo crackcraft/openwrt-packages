@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=2.5.0
+PKG_VERSION:=2.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=http://protobuf.googlecode.com/files
-PKG_MD5SUM:=a72001a9067a4c2c4e0e836d0f92ece4
+PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
+PKG_MD5SUM:=11aaac2d704eef8efd1867a807865d85
 
 PKG_BUILD_DEPENDS:=protobuf/host
 PKG_USE_MIPS16:=0
