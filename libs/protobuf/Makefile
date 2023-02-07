@@ -42,9 +42,6 @@ define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR)
 endef
 
-define Host/Install
-endef
-
 CONFIGURE_ARGS += --with-protoc=$(HOST_BUILD_DIR)/src/protoc
 
 define Build/InstallDev
